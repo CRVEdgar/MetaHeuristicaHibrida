@@ -1,6 +1,5 @@
 package org.example.main;
 
-//import org.apache.commons.math3.random.RandomDataGenerator;
 import org.example.model.Objeto;
 
 import java.util.ArrayList;
@@ -25,15 +24,15 @@ public class TabuSearch {
         tabuList = new ArrayList<>();
     }
 
-    public Knapsack search(Knapsack initialSolution, int iterations) {
-        Knapsack bestSolution = initialSolution;
-        Knapsack nextSolution = initialSolution;
+    public Mochila search(Mochila initialSolution, int iterations) {
+        Mochila bestSolution = initialSolution;
+        Mochila nextSolution = initialSolution;
 
         for (int i = 0; i < iterations; i++) {
-            List<Knapsack> neighbors = generateNeighbors(nextSolution);
+            List<Mochila> neighbors = gerarVizinhos(nextSolution);
             nextSolution = null;
 
-            for (Knapsack neighbor : neighbors) {
+            for (Mochila neighbor : neighbors) {
                 if (!isTabu(neighbor) && neighbor.getWeight() <= capacity &&
                         (nextSolution == null || neighbor.getValue() > nextSolution.getValue())) {
                     nextSolution = neighbor;
@@ -41,7 +40,7 @@ public class TabuSearch {
             }
 
             if (nextSolution == null) {
-                break; // No feasible neighbors found
+                break; // Nenhum vizinho viável encontrado
             }
 
             tabuList.add(nextSolution.getSelectedItems());
@@ -60,40 +59,39 @@ public class TabuSearch {
         return bestSolution;
     }
 
-    private boolean isTabu(Knapsack knapsack) {
+    private boolean isTabu(Mochila mochila) {
         for (int[] tabuItems : tabuList) {
-            if (Arrays.equals(tabuItems, knapsack.getSelectedItems())) {
+            if (Arrays.equals(tabuItems, mochila.getSelectedItems())) {
                 return true;
             }
         }
         return false;
     }
 
-    private List<Knapsack> generateNeighbors(Knapsack knapsack) {
-        List<Knapsack> neighbors = new ArrayList<>();
+    private List<Mochila> gerarVizinhos(Mochila mochila) {
+        List<Mochila> vizinhos = new ArrayList<>();
 
-        int numItems = knapsack.getNumItems();
-        int[] items = knapsack.getSelectedItems();
+        int numItems = mochila.getNumItems();
+        int[] items = mochila.getSelectedItems();
 
         for (int i = 0; i < numItems; i++) {
             int[] neighborItems = Arrays.copyOf(items, numItems);
             neighborItems[i] = (neighborItems[i] + 1) % 2;
 
-            neighbors.add(new Knapsack(knapsack.getValues(), knapsack.getWeights(), neighborItems));
+            vizinhos.add(new Mochila(mochila.getValues(), mochila.getWeights(), neighborItems));
         }
 
-        return neighbors;
+        return vizinhos;
     }
 
-    // Knapsack class represents a candidate solution
-    private class Knapsack {
+    private class Mochila {
         private int[] values;
-        private int[] weights;
+        private int[] pesos;
         private int[] selectedItems;
 
-        public Knapsack(int[] values, int[] weights, int[] selectedItems) {
+        public Mochila(int[] values, int[] pesos, int[] selectedItems) {
             this.values = values;
-            this.weights = weights;
+            this.pesos = pesos;
             this.selectedItems = selectedItems;
         }
 
@@ -109,9 +107,9 @@ public class TabuSearch {
 
         public int getWeight() {
             int totalWeight = 0;
-            for (int i = 0; i < weights.length; i++) {
+            for (int i = 0; i < pesos.length; i++) {
                 if (selectedItems[i] == 1) {
-                    totalWeight += weights[i];
+                    totalWeight += pesos[i];
                 }
             }
             return totalWeight;
@@ -122,7 +120,7 @@ public class TabuSearch {
         }
 
         public int[] getWeights() {
-            return weights;
+            return pesos;
         }
 
         public int[] getSelectedItems() {
@@ -135,17 +133,16 @@ public class TabuSearch {
     }
 
     /** INICIO HIBRIDIZAÇÃO */
-    private Knapsack applyEvolutionaryDifferential(Knapsack initialSolution, int iterations) {
-        Knapsack bestSolution = initialSolution;
-        Knapsack nextSolution = initialSolution;
+    private Mochila applyEvolutionaryDifferential(Mochila initialSolution, int iterations) {
+        Mochila bestSolution = initialSolution;
+        Mochila nextSolution = initialSolution;
 
-//        RandomDataGenerator random = new RandomDataGenerator();
         Random random = new Random();
 
 
         for (int i = 0; i < iterations; i++) {
-            Knapsack mutatedSolution = mutateSolution(nextSolution, random);
-            Knapsack trialSolution = recombineSolutions(nextSolution, mutatedSolution, random);
+            Mochila mutatedSolution = solucaoMutante(nextSolution, random);
+            Mochila trialSolution = recombinandoSolucao(nextSolution, mutatedSolution, random);
 
             if (trialSolution.getValue() > nextSolution.getValue() &&
                     trialSolution.getWeight() <= capacity) {
@@ -162,29 +159,18 @@ public class TabuSearch {
         return bestSolution;
     }
 
-    private Knapsack mutateSolution(Knapsack solution, Random random) {
+    private Mochila solucaoMutante(Mochila solution, Random random) {
         int numItems = solution.getNumItems();
         int[] mutatedItems = Arrays.copyOf(solution.getSelectedItems(), numItems);
 
-        // Aplica uma mutação aleatória em um item
+        // Aplicando uma mutação aleatória em um item
         int index = random.nextInt(0, numItems - 1);
         mutatedItems[index] = 1 - mutatedItems[index];
 
-        return new Knapsack(solution.getValues(), solution.getWeights(), mutatedItems);
+        return new Mochila(solution.getValues(), solution.getWeights(), mutatedItems);
     }
 
-//    private Knapsack recombineSolutions(Knapsack solution1, Knapsack solution2, RandomDataGenerator random) {
-//        int numItems = solution1.getNumItems();
-//        int[] recombinedItems = new int[numItems];
-//
-//        // Combina os itens das duas soluções
-//        for (int i = 0; i < numItems; i++) {
-//            recombinedItems[i] = random.nextBoolean() ? solution1.getSelectedItems()[i] : solution2.getSelectedItems()[i];
-//        }
-//
-//        return new Knapsack(solution1.getValues(), solution1.getWeights(), recombinedItems);
-//    }
-        private Knapsack recombineSolutions(Knapsack solution1, Knapsack solution2, Random random) {
+        private Mochila recombinandoSolucao(Mochila solution1, Mochila solution2, Random random) {
             int numItems = solution1.getNumItems();
             int[] recombinedItems = new int[numItems];
 
@@ -193,7 +179,7 @@ public class TabuSearch {
                 recombinedItems[i] = random.nextBoolean() ? solution1.getSelectedItems()[i] : solution2.getSelectedItems()[i];
             }
 
-            return new Knapsack(solution1.getValues(), solution1.getWeights(), recombinedItems);
+            return new Mochila(solution1.getValues(), solution1.getWeights(), recombinedItems);
         }
 
 
@@ -201,14 +187,13 @@ public class TabuSearch {
     public static void main(String[] args) {
 
         TabuSearch tabuSearch = new TabuSearch(10, LIMITE_MOCHILA.intValue());
-        
 
         int[] pesos = new int[QUANTIDADE_ITENS];
         int[] valores = new int[QUANTIDADE_ITENS];
         int[] solucaoInicial = new int[QUANTIDADE_ITENS]; // Solução inicial
 
 
-        Knapsack initialSolution = tabuSearch.new Knapsack(valores, pesos, solucaoInicial);
+        Mochila initialSolution = tabuSearch.new Mochila(valores, pesos, solucaoInicial);
 
         long init = System.currentTimeMillis();
         List<Objeto> objetos = getObjetos();
@@ -217,7 +202,7 @@ public class TabuSearch {
             valores[i] = objetos.get(i).getValorTotal().intValue();
         }
 //        Knapsack bestSolution = tabuSearch.search(initialSolution, 100);
-        Knapsack bestSolution = tabuSearch.applyEvolutionaryDifferential(initialSolution, 100);
+        Mochila bestSolution = tabuSearch.applyEvolutionaryDifferential(initialSolution, 100);
 
         long finish = System.currentTimeMillis();
 
