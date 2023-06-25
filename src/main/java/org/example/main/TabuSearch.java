@@ -133,7 +133,7 @@ public class TabuSearch {
     }
 
     /** INICIO HIBRIDIZAÇÃO */
-    private Mochila applyEvolutionaryDifferential(Mochila initialSolution, int iterations) {
+    private Mochila evolucaoDiferencial(Mochila initialSolution, int iterations) {
         Mochila bestSolution = initialSolution;
         Mochila nextSolution = initialSolution;
 
@@ -202,7 +202,7 @@ public class TabuSearch {
             valores[i] = objetos.get(i).getValorTotal().intValue();
         }
 //        Knapsack bestSolution = tabuSearch.search(initialSolution, 100);
-        Mochila bestSolution = tabuSearch.applyEvolutionaryDifferential(initialSolution, 100);
+        Mochila bestSolution = tabuSearch.evolucaoDiferencial(initialSolution, 100);
 
         long finish = System.currentTimeMillis();
 
